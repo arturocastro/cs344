@@ -2,11 +2,11 @@
 // Color to Greyscale Conversion
 
 //A common way to represent color images is known as RGBA - the color
-//is specified by how much Red, Grean and Blue is in it.
-//The 'A' stands for Alpha and is used for transparency, it will be
+//is specified by how much Red, Green, and Blue is in it.
+//The 'A' stands for Alpha and is used for transparency; it will be
 //ignored in this homework.
 
-//Each channel Red, Blue, Green and Alpha is represented by one byte.
+//Each channel Red, Blue, Green, and Alpha is represented by one byte.
 //Since we are using one byte for each color there are 256 different
 //possible values for each color.  This means we use 4 bytes per pixel.
 
@@ -31,7 +31,15 @@
 //You should fill in the kernel as well as set the block and grid sizes
 //so that the entire image is processed.
 
+#include "reference_calc.cpp"
 #include "utils.h"
+#include <stdio.h>
+
+__device__
+unsigned char intensity(const uchar4 * const rgbaImg)
+{
+    return 0.299F * rgbaImg->x + 0.587F * rgbaImg->y + 0.114F * rgbaImg->z;
+}
 
 __global__
 void rgba_to_greyscale(const uchar4* const rgbaImage,
@@ -50,6 +58,15 @@ void rgba_to_greyscale(const uchar4* const rgbaImage,
   //First create a mapping from the 2D block and grid locations
   //to an absolute 2D location in the image, then use that to
   //calculate a 1D offset
+  
+  const int x = blockIdx.x * 22 + threadIdx.x;
+  const int y = blockIdx.y * 22 + threadIdx.y;
+    
+  if (x < numCols && y < numRows)
+  {
+    const int idx = y * numCols + x;
+    greyImage[idx] = intensity(&rgbaImage[idx]);
+  }
 }
 
 void your_rgba_to_greyscale(const uchar4 * const h_rgbaImage, uchar4 * const d_rgbaImage,
@@ -57,10 +74,19 @@ void your_rgba_to_greyscale(const uchar4 * const h_rgbaImage, uchar4 * const d_r
 {
   //You must fill in the correct sizes for the blockSize and gridSize
   //currently only one block with one thread is being launched
-  const dim3 blockSize(1, 1, 1);  //TODO
-  const dim3 gridSize( 1, 1, 1);  //TODO
+  
+  const int blockX = 22;
+  const int blockY = 22;
+    
+  const int gridX = numCols / 22 + 1;
+  const int gridY = numRows / 22 + 1;
+    
+  printf("numRows = %d\nnumCols = %d\ngridX = %d\ngridY = %d\n", numRows, numCols, gridX, gridY);
+    
+  const dim3 blockSize(blockX, blockY, 1);  //TODO
+  const dim3 gridSize(gridX, gridY, 1);  //TODO
+    
   rgba_to_greyscale<<<gridSize, blockSize>>>(d_rgbaImage, d_greyImage, numRows, numCols);
   
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
-
 }
