@@ -35,6 +35,8 @@
 #include "utils.h"
 #include <stdio.h>
 
+#define BLOCK_SIZE 22
+
 __device__
 unsigned char intensity(const uchar4 * const rgbaImg)
 {
@@ -59,8 +61,8 @@ void rgba_to_greyscale(const uchar4* const rgbaImage,
   //to an absolute 2D location in the image, then use that to
   //calculate a 1D offset
   
-  const int x = blockIdx.x * 22 + threadIdx.x;
-  const int y = blockIdx.y * 22 + threadIdx.y;
+  const int x = blockIdx.x * BLOCK_SIZE + threadIdx.x;
+  const int y = blockIdx.y * BLOCK_SIZE + threadIdx.y;
     
   if (x < numCols && y < numRows)
   {
@@ -75,11 +77,11 @@ void your_rgba_to_greyscale(const uchar4 * const h_rgbaImage, uchar4 * const d_r
   //You must fill in the correct sizes for the blockSize and gridSize
   //currently only one block with one thread is being launched
   
-  const int blockX = 22;
-  const int blockY = 22;
+  const int blockX = BLOCK_SIZE;
+  const int blockY = BLOCK_SIZE;
     
-  const int gridX = numCols / 22 + 1;
-  const int gridY = numRows / 22 + 1;
+  const int gridX = numCols / BLOCK_SIZE + 1;
+  const int gridY = numRows / BLOCK_SIZE + 1;
     
   printf("numRows = %d\nnumCols = %d\ngridX = %d\ngridY = %d\n", numRows, numCols, gridX, gridY);
     
